@@ -5,95 +5,153 @@
  */
 function pager(elements, currentPage, elementsPerPage, displaySize) {
 
-    elementsPerPage = (isNaN(elementsPerPage)) ? 10 : elementsPerPage;
-    displaySize = (isNaN(displaySize)) ?  8 : displaySize;
-    
-    var page = 0;
-    var pages = [];
-    
-    for (let i = 0, l = Math.floor(elements / elementsPerPage); i < l; i++) {
-        pages.push(++page);
-    }
+  elementsPerPage = (isNaN(elementsPerPage)) ? 10 : elementsPerPage;
+  displaySize = (isNaN(displaySize)) ? 9 : displaySize;
 
-    if (elements % elementsPerPage !== 0) {
-        pages.push(++page);
-    }
+  var page = 0;
+  var pages = [];
 
-    if (pages.length > displaySize) {
-        var steppedPages = paginate(currentPage - 1, displaySize, pages);
-        return steppedPages;
-    } else {
-        return pages;
-    }
+  for (let i = 0, l = Math.floor(elements / elementsPerPage); i < l; i++) {
+    pages.push(++page);
+  }
+
+  if (elements % elementsPerPage !== 0) {
+    pages.push(++page);
+  }
+
+  if (pages.length > displaySize) {
+    var steppedPages = paginate(currentPage - 1, displaySize, pages);
+    return steppedPages;
+  } else {
+    return pages;
+  }
 }
 
 /**
  *  
  */
 function paginate(currentIndex, displaySize, pages) {
-    
-    var splitPages = {
-        left: [],
-        right: [],
 
-        populate: function() {
-            if (currentIndex > 0) {
-                for (let i = (currentIndex - 1); i >= 0; i--) {
-                    this.left.unshift(pages[i]);
-                }
-            }
+  currentIndex = (currentIndex < 0) ? 0 : currentIndex;
+  currentIndex = (currentIndex > (pages.length - 1)) ? (pages.length - 1) : currentIndex;
 
-            if (currentIndex < (pages.length - 1)) {
-                for (let i = (currentIndex + 1); i < pages.length; i++) {
-                    this.right.push(pages[i]);
-                }
-            }            
+  var splitPages = {
+    left: [],
+    right: [],
+
+    populate: function () {
+      if (currentIndex > 0) {
+        for (let i = (currentIndex - 1); i > 0; i--) {
+          this.left.unshift(pages[i]);
         }
-    };
+      }
 
-    var steppedPages = {
-        left: [],
-        right: [],
-        all: [],
-        
-        step: function (splitPages, currentIndex, balance) {
-            if (currentIndex > 0) {
-                for (let i = 0; i < (splitPages.left.length - 1); i = i + balance.left) {
-                    this.left.push(splitPages.left[i]);
-                }
-            }
-
-            if (currentIndex < splitPages.right[splitPages.right.length - 1]) {
-                for (let i = (splitPages.right.length - 1); i > 0; i = i - balance.right) {
-                    this.right.unshift(splitPages.right[i]);
-                }
-            }
-
-            this.all = this.left.push(currentIndex + 1);
-            this.all.concat(this.right);
-
-            return this.all;
+      if (currentIndex < (pages.length - 1)) {
+        for (let i = (currentIndex + 1); i < (pages.length - 1); i++) {
+          this.right.push(pages[i]);
         }
+      }
     }
+  };
+
+  var steppedPages = {
+    left: [],
+    right: [],
+    all: [],
+
+    step: function (splitPages, balance) {
+      if (currentIndex > 0) {
+        for (let i = 0; i < (splitPages.left.length - 1); i = i + balance.left) {
+          this.left.push(splitPages.left[i]);
+        }
+      }
+
+      if (currentIndex < splitPages.right[splitPages.right.length - 1]) {
+        for (let i = (splitPages.right.length - 1); i > 0; i = i - balance.right) {
+          this.right.unshift(splitPages.right[i]);
+        }
+      }
+
+      this.all = this.left.push(currentIndex + 1);
+      this.all.concat(this.right);
+
+      return this.all;
+    }
+  };
+
+  splitPages.populate();
+
+  var balancePercents = percent(splitPages.left.length, splitPages.right.length);
+
+  console.log('X = ' + balancePercents.left);
+  console.log('Y = ' + balancePercents.right);
+
+  var balances = balance((currentIndex + 1), displaySize, pages.length, balancePercents);
+
+  console.log('X2 = ' + balances.left);
+  console.log('Y2 = ' + balances.right);
+
+  return [splitPages.left, splitPages.right];
 }
 
-    var bal = balance();
+/**
+ * 
+ * @param {*} currentPage 
+ * @param {*} wantedPages 
+ * @param {*} lastPage 
+ * @param {*} percentages 
+ */
+function balance(currentPage, wantedPages, lastPage, percentages) {
+  wantedPages = (currentPage === 1 || currentPage === lastPage) ? (wantedPages - 2) : (wantedPages - 3);
 
-    return splitPages.join(bal);
+  console.log('[INFO]: WP = ' + wantedPages);
 
-function balance () {
+  var percBalance = {
+    left: 0,
+    right: 0,
 
+    calculate: function () {
+      this.left = wantedPages * (percentages.left / 100);
+      this.right = wantedPages * (percentages.right / 100);
+    }
+  };
+
+  percBalance.calculate();
+
+  return percBalance;
 }
 
+/**
+ * 
+ * @param {*} leftLength 
+ * @param {*} rightLength 
+ */
+function percent(leftLength, rightLength) {
 
+  var percentages = {
+    left: 0,
+    right: 0,
 
+    ruleOfThree: function (length) {
+      return (100 * length) / (leftLength + rightLength);
+    },
 
+    define: function () {
+      this.left = percentages.ruleOfThree(leftLength);
+      this.right = percentages.ruleOfThree(rightLength);
+    }
+  };
 
+  percentages.define();
 
+  return percentages;
+}
 
+// var bal = balance();
 
+// function balance() {
 
-
+// }
 
 // /**
 //  * Separates list of pages into two arrays, one starting from <currentPage - 1> on to the left,
@@ -104,18 +162,18 @@ function balance () {
 //  * @param {Number} desiredDisplaySize - Desired amount of pages to be displayed after stepping.
 //  */
 // function fixedPager(currentPage, desiredDisplaySize) {
-    
+
 //     var leftAllPages = [];
 //     var rightAllPages = [];
 
 //     var leftShownPages = [];
 //     var rightShownPages = [];
-    
+
 //     currentPage = (currentPage < 0) ? 0 : currentPage;
 //     currentPage = (currentPage > (totalPages.length - 1)) ? (totalPages.length - 1) : currentPage;
 
 //     for (let i = (currentPage - 1); i >= 0; i--) {
-        
+
 //         leftAllPages.unshift(totalPages[i]);
 //     }
 
@@ -137,7 +195,6 @@ function balance () {
 
 // }
 
-
 // /**
 //  * Steps through each array of pages following the left/right balance determined by the percentage of
 //  * pages regarding the total. Returns two arrays containing each a selection of left and right
@@ -148,7 +205,7 @@ function balance () {
 //  * @param {Array} rightAllPages - All pages to the right of the current one.
 //  */
 // function displayPages(leftRightBalance, leftAllPages, rightAllPages) {
-    
+
 //     var leftStepping = Math.ceil(leftAllPages.length / leftRightBalance[0]);
 //     var rightStepping = Math.ceil(rightAllPages.length / leftRightBalance[1]);
 //     var leftChosenPages = [];
@@ -168,7 +225,6 @@ function balance () {
 
 //     return [leftChosenPages, rightChosenPages];
 // }
-
 
 // /**
 //  * Determines the balance of how many pages must be shown each to the left and the right sides in regard
@@ -190,7 +246,6 @@ function balance () {
 //     }
 // }
 
-
 // /**
 //  * 
 //  *
@@ -210,7 +265,7 @@ function balance () {
 // }
 
 function getArg(idx) {
-    return parseInt(process.argv[idx]);
+  return parseInt(process.argv[idx]);
 }
 
 console.log(pager(getArg(2), getArg(3), getArg(4), getArg(5)));
