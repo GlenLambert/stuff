@@ -62,7 +62,6 @@ function paginate(currentIndex, displaySize, pages) {
   var steppedPages = {
     left: [],
     right: [],
-    all: [],
     leftStepping: 0,
     rightStepping: 0,
 
@@ -85,12 +84,7 @@ function paginate(currentIndex, displaySize, pages) {
         for (let i = (splitPages.right[0] - 1) + this.rightStepping; this.right.length < balance.right; i = (i + this.rightStepping)) {
           this.right.push(i);
         }
-
-        
       }
-
-      //this.all = this.left.push(currentIndex + 1);
-      //this.all.concat(this.right);
     }
   };
 
@@ -114,7 +108,7 @@ function paginate(currentIndex, displaySize, pages) {
   console.log('[[Stepped]] Left: ' + steppedPages.left);
   console.log('[[Stepped]] Right: ' + steppedPages.right);
 
-  return [splitPages.left, splitPages.right];
+  return steppedPages;
 }
 
 /**
