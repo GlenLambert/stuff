@@ -63,24 +63,34 @@ function paginate(currentIndex, displaySize, pages) {
     left: [],
     right: [],
     all: [],
+    leftStepping: 0,
+    rightStepping: 0,
+
+    //var rightStepping = Math.ceil(rightAllPages.length / leftRightBalance[1]);
 
     step: function (splitPages, balance) {
-      if (currentIndex > 0) {
-        for (let i = 0; i < (splitPages.left.length - 1); i = i + balance.left) {
-          this.left.push(splitPages.left[i]);
+      if (balance.left > 0) {
+        this.leftStepping = Math.floor(splitPages.left.length / balance.left);
+        console.log('LeftStep: ' + this.leftStepping);
+
+        for (let i = (splitPages.left[splitPages.left.length - 1] + 1) - this.leftStepping; this.left.length < balance.left; i = (i - this.leftStepping)) {
+          this.left.unshift(i);
         }
       }
 
-      if (currentIndex < splitPages.right[splitPages.right.length - 1]) {
-        for (let i = (splitPages.right.length - 1); i > 0; i = i - balance.right) {
-          this.right.unshift(splitPages.right[i]);
+      if (balance.right > 0) {
+        this.rightStepping = Math.floor(splitPages.right.length / balance.right);
+        console.log('RightStep: ' + this.rightStepping);
+
+        for (let i = (splitPages.right[0] - 1) + this.rightStepping; this.right.length < balance.right; i = (i + this.rightStepping)) {
+          this.right.push(i);
         }
+
+        
       }
 
-      this.all = this.left.push(currentIndex + 1);
-      this.all.concat(this.right);
-
-      return this.all;
+      //this.all = this.left.push(currentIndex + 1);
+      //this.all.concat(this.right);
     }
   };
 
@@ -88,8 +98,8 @@ function paginate(currentIndex, displaySize, pages) {
 
   var balancePercents = percent(splitPages.left.length, splitPages.right.length);
 
-  console.log('X = ' + balancePercents.left);
-  console.log('Y = ' + balancePercents.right);
+  console.log('X% = ' + balancePercents.left);
+  console.log('Y% = ' + balancePercents.right);
 
   var balances = balance((currentIndex + 1), displaySize, pages.length, balancePercents);
 
@@ -98,6 +108,11 @@ function paginate(currentIndex, displaySize, pages) {
 
   console.log('[[LEFT]] = ' + balances.left);
   console.log('[[RIGHT]] = ' + balances.right);
+
+  steppedPages.step(splitPages, balances);
+
+  console.log('[[Stepped]] Left: ' + steppedPages.left);
+  console.log('[[Stepped]] Right: ' + steppedPages.right);
 
   return [splitPages.left, splitPages.right];
 }
