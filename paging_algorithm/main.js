@@ -1,12 +1,17 @@
 'use strict';
 
 /**
- * 
+ * DISPLAY SIZE MUST BE AN ODD NUMBER. IF IT'S NOT, IT WILL BE FORCED INTO THE NEXT ODD NUMBER UPWARDS.
  */
 function pager(elements, currentPage, elementsPerPage, displaySize) {
 
   elementsPerPage = (isNaN(elementsPerPage)) ? 10 : elementsPerPage;
   displaySize = (isNaN(displaySize)) ? 9 : displaySize;
+
+  if (!(displaySize % 2)) { // Check if NOT odd
+    console.log('[INFO]: displaySize of ' + displaySize + ' forced into ' + (displaySize + 1));
+    displaySize++;
+  }
 
   var page = 0;
   var pages = [];
@@ -88,8 +93,11 @@ function paginate(currentIndex, displaySize, pages) {
 
   var balances = balance((currentIndex + 1), displaySize, pages.length, balancePercents);
 
-  console.log('X2 = ' + balances.left);
-  console.log('Y2 = ' + balances.right);
+  console.log('X2 int = ' + balances.leftInt + ', flo = ' + balances.leftDec);
+  console.log('Y2 int = ' + balances.rightInt + ', flo = ' + balances.rightDec);
+
+  console.log('[[LEFT]] = ' + balances.left);
+  console.log('[[RIGHT]] = ' + balances.right);
 
   return [splitPages.left, splitPages.right];
 }
@@ -102,17 +110,52 @@ function paginate(currentIndex, displaySize, pages) {
  * @param {*} percentages 
  */
 function balance(currentPage, wantedPages, lastPage, percentages) {
-  wantedPages = (currentPage === 1 || currentPage === lastPage) ? (wantedPages - 2) : (wantedPages - 3);
-
-  console.log('[INFO]: WP = ' + wantedPages);
 
   var percBalance = {
+    leftInt: 0,
+    leftDec: 0,
+
+    rightInt: 0,
+    rightDec: 0,
+
     left: 0,
     right: 0,
 
+    resWantedPages: (currentPage === 1 || currentPage === lastPage) ? (wantedPages - 2) : (wantedPages - 3),
+
     calculate: function () {
-      this.left = wantedPages * (percentages.left / 100);
-      this.right = wantedPages * (percentages.right / 100);
+      console.log('[INFO]: WP = ' + this.resWantedPages);
+      this.leftInt = tearNumber(this.resWantedPages * (percentages.left / 100)).integerVal;
+      this.leftDec = tearNumber(this.resWantedPages * (percentages.left / 100)).decimalVal;
+
+      this.rightInt = tearNumber(this.resWantedPages * (percentages.right / 100)).integerVal;
+      this.rightDec = tearNumber(this.resWantedPages * (percentages.right / 100)).decimalVal;
+
+      this.left = this.leftInt;
+      this.right = this.rightInt;
+
+      if ((this.left + this.right) !== this.resWantedPages) {
+        if (this.leftDec === this.rightDec) {
+          if (this.leftInt > this.rightInt) {
+            this.left = this.leftInt + 1;
+            this.right = this.rightInt;
+          } else {
+            this.left = this.leftInt;
+            this.right = this.rightInt + 1;
+          }
+        } else {
+          if (this.leftDec > this.rightDec) {
+            this.left = this.leftInt + 1;
+            this.right = this.rightInt;
+          } else {
+            this.left = this.leftInt;
+            this.right = this.rightInt + 1;
+          }
+        }
+      } else {
+        this.left = this.leftInt;
+        this.right = this.rightInt;
+      }
     }
   };
 
@@ -145,6 +188,23 @@ function percent(leftLength, rightLength) {
   percentages.define();
 
   return percentages;
+}
+
+function tearNumber(inputNumber) {
+
+  var number = {
+    integerVal: 0,
+    decimalVal: 0,
+
+    tear: function () {
+      this.integerVal = Math.floor(inputNumber);
+      this.decimalVal = (inputNumber % 1);
+    }
+  };
+
+  number.tear();
+
+  return number;
 }
 
 // var bal = balance();
